@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compare Followers</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <h1>Compare Followers</h1>
+    <div class="file-inputs">
+        <label for="following-file">Archivo de seguidos:</label>
+        <input type="file" id="following-file" accept=".html">
+        <label for="followers-file">Archivo de seguidores:</label>
+        <input type="file" id="followers-file" accept=".html">
+    </div>
+    <button onclick="compareFollowers()">Comparar</button>
+    
+    <div id="results">
+        <h2>Usuarios que sigues pero que no te siguen de vuelta:</h2>
+        <ul id="not-following-back-list"></ul>
+    </div>
+
+    <script>
+        function readFile(file, callback) {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                callback(event.target.result);
+            };
+            reader.readAsText(file);
+        }
+
+        async function compareFollowers() {
+            const followingFile = document.getElementById('following-file').files[0];
+            const followersFile = document.getElementById('followers-file').files[0];
+
+            if (!followingFile || !followersFile) {
+                alert('Please select both files.');
+                return;
+            }
+
+            // Read files
+            const followingHtmlPromise = new Promise((resolve) => {
+                readFile(followingFile, resolve);
+            });
+
+            const followersHtmlPromise = new Promise((resolve) => {
+                readFile(followersFile, resolve);
+            });
+
+            const followingHtml = await followingHtmlPromise;
+            const followersHtml = await followersHtmlPromise;
+
+            // Create temporary DOM elements
+            const followingDiv = document.createElement('div');
+            followingDiv.innerHTML = followingHtml;
+
+            const followersDiv = document.createElement('div');
+            followersDiv.innerHTML = followersHtml;
+
+            // Extract usernames
+            const following = new Set([...followingDiv.querySelectorAll('a')].map(item => item.textContent.trim()));
+            const followers = new Set([...followersDiv.querySelectorAll('a')].map(item => item.textContent.trim()));
+
+            // Find users not following back
+            const notFollowingBack = new Set([...following].filter(user => !followers.has(user)));
+
+            // Display results
+            const resultList = document.getElementById('not-following-back-list');
+            resultList.innerHTML = ''; // Clear previous results
+
+            notFollowingBack.forEach(user => {
+                const listItem = document.createElement('li');
+                listItem.textContent = user;
+                resultList.appendChild(listItem);
+            });
+        }
+    </script>
+</body>
+</html>
